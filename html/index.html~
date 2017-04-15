@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <title>IOT_PAGE</title>
+        <meta charset="uft=8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+      <header>
+        <h2> Lumin&aacute;ria </h2>
+      </header>
+      <main>
+        <div>
+          <p>Configura&ccedil;&atilde;o</p>
+        </div>
+        <div class="sens-area">
+        </div>
+      </main>
+      <footer>
+        <p>Criado por: Washington Lisboa</p>
+        <a href="https://github.com/wlisboa/iot_luminaria">fonte do codigo</a>
+      </footer>
+    </body>
+      <script>
+      function comando() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function()
+        {
+          if (xhttp.readyState == 4 && xhttp.status == 200)
+          {
+            document.getElementById("sensor").innerHTML = xhttp.responseText;
+          }
+        };
+        xhttp.open("POST", "/comando", true);
+        xhttp.send();
+      }    
+    </script>
+    <style>
+      body {
+        text-align: center;     
+      }
+      button {
+      	  height: 50px;
+          width: 150px;
+      }
+      header {
+        padding-top: 5px;
+        background-color: #38C2B3;
+        border-bottom: 2px solid #000;
+      }
+      main {
+        border-bottom: 2px solid #000;
+      }
+      .sens-area{
+        border-bottom: 2px solid #000;
+      }
+      .cmd-area{
+        display: fex;
+        align-items: center;
+        justify-content: space-between; 
+        border-bottom: 2px solid #000;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+      .cmd-area form{
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }     
+    </style>
+ </html>
