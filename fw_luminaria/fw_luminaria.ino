@@ -1,14 +1,204 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <EEPROM.h>
 
-const char *ssid = "luminaria";
-const char *password = "";
+//************************************************************
+// Define Area
+//************************************************************
+
+// EEPROM Addresses
+
+#define ID_LEN          50
+#define TY_LEN          5
+#define HR_LEN          6
+
+#define EE_ID_ADDR      0                     // The EEPROM adress used to store the ID (to check if sketch already has ran) - 1 byte long
+#define EE_A_TYPE       EE_ID_ADDR   + 1      // Type of alarm. That can be luz or son
+#define EE_HOUR         EE_A_TYPE    + TY_LEN
+#define EE_WIFI_SSID    EE_HOUR      + HR_LEN // Wifi SSID - 30 bytes long
+#define EE_WIFI_PASS    EE_WIFI_SSID + ID_LEN // Wifi PASS - 30 bytes long
+#define EE_MAC_ADDR     EE_WIFI_PASS + ID_LEN // First byte address of the MAC - 6 bytes long
+#define EE_IP_ADDR      EE_MAC_ADDR  + 6      // First byte address of the IP - 4 bytes long
+#define EE_GW_ADDR      EE_IP_ADDR   + 4      // First byte address of the GATEWAY - 4 bytes long
+#define EE_MASK_ADDR    EE_GW_ADDR   + 4      // First byte address of the SUBNETMASK - 4 bytes long
+#define ID              0x00                  // Used to identify if valid date in EEPROM the "know" bit,
+                                              // if this is written in EEPROM the sketch has ran before
+
+const char *ssidAP     = "luminaria";
+const char *passwordAP = "";
+
+char ssidSTAT[ID_LEN]     = "Wlan_Lisboa";
+char passwordSTAT[ID_LEN] = "familia2015";
+
+char atype[TY_LEN] = "luz";
+char ahour[HR_LEN] = "06:00";
+
+// Network Parameters
+uint8_t mac[]    = {0x00,0x00,0x00,0x00,0x00,0x00};
+IPAddress ip(192,168,0,54);
+IPAddress subnet(255,255,255,0);
+IPAddress gateway(192,168,0,1);
 
 ESP8266WebServer server(80);
 
 const int led = 0;
 const int lamp =5;
+
+String monta_resposta_config(){
+  
+String pagina_resposta= "<!DOCTYPE html>";
+pagina_resposta += "<html lang=\"pt-br\">";
+pagina_resposta +=     "<head>";
+pagina_resposta +=         "<title>IOT_CONFIG</title>";
+pagina_resposta +=         "<meta charset=\"uft=8\">";
+pagina_resposta +=         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
+pagina_resposta +=     "</head>";
+pagina_resposta +=     "<body>";
+pagina_resposta +=        "<header>";
+pagina_resposta +=            "<h1> Lumin&aacute;ria </h1>";
+pagina_resposta +=        "</header>";
+pagina_resposta +=       "<main>";
+pagina_resposta +=       "<p>Configura&ccedil;&atilde;o enviada com sucesso! Reinicie o dispositivo e conecte-se novamente.</p>";
+pagina_resposta +=       "</main>";
+pagina_resposta +=        "<footer>";
+pagina_resposta +=            "<p>Criado por: Washington Lisboa</p>";
+pagina_resposta +=            "<a href=\"https://github.com/wlisboa/iot_luminaria\">fonte do codigo</a>";
+pagina_resposta +=        "</footer>";
+pagina_resposta +=     "</body>";
+pagina_resposta +=     "<style>";
+pagina_resposta +=        "body {";
+pagina_resposta +=            "text-align: center;";
+pagina_resposta +=        "}";
+pagina_resposta +=        "header {";
+pagina_resposta +=            "padding-top: 5px;";
+pagina_resposta +=            "border-bottom: 2px solid #000;";
+pagina_resposta +=            "background-color: #38C2B3;";
+pagina_resposta +=        "}";
+pagina_resposta +=        "main {";
+pagina_resposta +=            "border-bottom: 2px solid #000;";
+pagina_resposta +=        "}";
+pagina_resposta +=     "</style>";
+pagina_resposta +="</html>";
+return pagina_resposta;
+}
+
+
+String monta_index(){
+  
+String pagina_index = "<!DOCTYPE html>";
+pagina_index += "<html lang=\"pt-br\">";
+pagina_index +=     "<head>";
+pagina_index +=         "<title>IOT_CONFIG</title>";
+pagina_index +=         "<meta charset=\"uft=8\">";
+pagina_index +=         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
+pagina_index +=     "</head>";
+pagina_index +=     "<body onload=\"load()\">";
+pagina_index +=       "<header>";
+pagina_index +=         "<h1> Lumin&aacute;ria </h1>";
+pagina_index +=       "</header>";
+pagina_index +=       "<main>";
+pagina_index +=        "<form class=\"form-conf\" method=\"POST\" action=\"/conf\" >";
+pagina_index +=             "<div>";
+pagina_index +=                 "<h3>Configura&ccedil;&atilde;o do despertador</h3>";
+pagina_index +=                 "<select id=\"desp\" name=\"desp\">";
+pagina_index +=                     "<option value=\"luz\">Luz</option>";
+pagina_index +=                     "<option value=\"som\">Som</option>";
+pagina_index +=                 "</select>";
+pagina_index +=                 "<label>Hora:</label>";
+pagina_index +=                 "<input type=\"time\" id=\"time\" name=\"time\">";
+pagina_index +=             "</div>";
+pagina_index +=             "<div>";
+pagina_index +=                 "<h3>Configura&ccedil;&atilde;o da rede</h3>";
+
+pagina_index +=                 "<label>Nome da rede:</label>";
+pagina_index +=                 "<div class=\"data\">";
+pagina_index +=                     "<input type=\"text\" id=\"rede\" name=\"rede\">";
+pagina_index +=                 "</div>";
+
+pagina_index +=                 "<label>Senha:</label>";
+pagina_index +=                 "<div class=\"data\">";
+pagina_index +=                     "<input type=\"password\" id=\"pass\" name=\"pass\">";
+pagina_index +=                 "</div>";
+
+pagina_index +=                 "<label>IP:</label>";
+pagina_index +=                 "<div class=\"data\">";
+pagina_index +=                     "<input id=\"ip\" name=\"ip\" required pattern=\"^([0-9]{1,3}\.){3}[0-9]{1,3}$\">";
+pagina_index +=                 "</div>";
+
+pagina_index +=                 "<label>Subnet Mask:</label>";
+pagina_index +=                  "<div class=\"data\">";
+pagina_index +=                     "<input id=\"subn\" name=\"subn\" required pattern=\"^([0-9]{1,3}\.){3}[0-9]{1,3}$\">";
+pagina_index +=                  "</div>";
+
+pagina_index +=                 "<label>Gateway:</label>";
+pagina_index +=                 "<div class=\"data\">";
+pagina_index +=                     "<input id=\"gatw\" name=\"gatw\" required pattern=\"^([0-9]{1,3}\.){3}[0-9]{1,3}$\">";
+pagina_index +=                 "</div>";
+pagina_index +=                 "<div class=\"d-sub1\">";
+pagina_index +=                     "<input class=\"sub1\" type=\"submit\" value=\"Enviar\">";
+pagina_index +=                 "</div>";
+pagina_index +=             "</div>";
+pagina_index +=         "</form>";
+pagina_index +=       "</main>";
+pagina_index +=       "<footer>";
+pagina_index +=         "<p>Criado por: Washington Lisboa</p>";
+pagina_index +=         "<a href=\"https://github.com/wlisboa/iot_luminaria\">fonte do codigo</a>";
+pagina_index +=       "</footer>";
+pagina_index +=     "</body>";
+pagina_index +=       "<script>";
+pagina_index +=       "function load() {";
+pagina_index +=         "var xhttp = new XMLHttpRequest();";
+pagina_index +=         "xhttp.onreadystatechange = function()";
+pagina_index +=         "{";
+pagina_index +=           "if (xhttp.readyState == 4 && xhttp.status == 200)";
+pagina_index +=           "{";
+pagina_index +=               "var data = xhttp.responseText;";
+pagina_index +=               "var data_s = data.split(\" \");";
+pagina_index +=               "document.getElementById(\"desp\").value = data_s[0];";
+pagina_index +=               "document.getElementById(\"time\").value = data_s[1];";
+pagina_index +=               "document.getElementById(\"rede\").value = data_s[2];";
+pagina_index +=               "document.getElementById(\"pass\").value = data_s[3];";
+pagina_index +=               "document.getElementById(\"ip\").value = data_s[4];";
+pagina_index +=               "document.getElementById(\"subn\").value = data_s[5];";
+pagina_index +=               "document.getElementById(\"gatw\").value = data_s[6];";
+pagina_index +=           "}";
+pagina_index +=        "};";
+pagina_index +=         "xhttp.open(\"POST\", \"/load\", true);";
+pagina_index +=         "xhttp.send();";
+pagina_index +=       "}";
+pagina_index +=     "</script>";
+pagina_index +=     "<style>";
+pagina_index +=       "body {";
+pagina_index +=           "text-align: center;";
+pagina_index +=       "}";
+pagina_index +=       "header {";
+pagina_index +=           "padding-top: 2px;";
+pagina_index +=           "background-color: #38C2B3;";
+pagina_index +=           "border-bottom: 2px solid #666;";
+pagina_index +=       "}";
+pagina_index +=       "main {";
+pagina_index +=           "border-bottom: 2px solid #666;";
+pagina_index +=       "}";
+pagina_index +=       ".data{";
+pagina_index +=           "padding-bottom: 5px;";
+pagina_index +=       "}";
+pagina_index +=       ".data input{";
+pagina_index +=           "font-size: 16px;";
+pagina_index +=       "}";
+pagina_index +=       ".form-conf .d-sub1{";
+pagina_index +=           "padding-top: 20px;";
+pagina_index +=           "padding-bottom: 20px;";
+pagina_index +=       "}";
+pagina_index +=       ".form-conf .d-sub1 .sub1{";
+pagina_index +=           "font-size: 25px;";
+pagina_index +=           "width: 150px;";
+pagina_index +=       "}";
+pagina_index +=     "</style>";
+pagina_index +=  "</html>";
+
+return pagina_index;
+}
 
 String monta_pagina()
 {
@@ -137,8 +327,71 @@ pagina_root += "</html>";
 void handleRoot() {
     
   digitalWrite(led, 0);
-  server.send(200, "text/html", monta_pagina());
+  server.send(200, "text/html", monta_index());
   digitalWrite(led, 1);
+}
+/*
+ *=============================================================================
+ *NAME:         void handleLoad()
+ *
+ *DESCRIPTION:  
+ *
+ *=============================================================================
+*/
+void handleLoad() {
+
+  String data;
+  data =  atype;
+  data += " ";
+  data += ahour;
+  data += " "; 
+  data += ssidSTAT;
+  data += " ";
+  data += passwordSTAT;
+  data += " ";
+  data += ip.toString();
+  data += " ";
+  data += subnet.toString();
+  data += " ";
+  data += gateway.toString();
+
+  Serial.println(data);     
+  server.send(200, "text/text", data);  
+}
+/*
+ *=============================================================================
+ *NAME:         void handleLoad()
+ *
+ *DESCRIPTION:  
+ *
+ *=============================================================================
+*/
+void handleConf(){
+  String sArg, sSub;
+  char cIp[20];
+  int firstPoint;
+  
+  Serial.println("Handle Config");
+  if (server.hasArg("desp")){
+      sArg = server.arg("desp");
+      Serial.println(sArg);
+      sArg = server.arg("time");
+      Serial.println(sArg);
+      sArg = server.arg("rede");
+      Serial.println(sArg);
+      sArg.toCharArray(ssidSTAT, ID_LEN);   
+      sArg = server.arg("pass");
+      Serial.println(sArg);
+      sArg.toCharArray(passwordSTAT, ID_LEN);
+      ip.fromString(server.arg("ip"));           
+      Serial.println(ip);
+      subnet.fromString(server.arg("subn"));
+      Serial.println(subnet);
+      gateway.fromString(server.arg("gatw"));
+      Serial.println(gateway);                         
+  }
+  saveBoardConfig();
+  server.send(200, "text/html", monta_resposta_config());
 }
 /*
  *=============================================================================
@@ -163,7 +416,7 @@ void handleSensor()
  *DESCRIPTION:
  *=============================================================================
 */
-void handleCmd1() {
+void handleCmd1(){ 
   static int controle = 0;  
   digitalWrite(lamp, 0);
   
@@ -248,6 +501,173 @@ void handleNotFound(){
   server.send(404, "text/plain", message);
   digitalWrite(led, 0);
 }
+
+/*
+ *=============================================================================
+ *NAME:         
+ *
+ *DESCRIPTION:  
+ *=============================================================================
+*/
+void setup_AP(){
+
+  Serial.println();
+  Serial.print("Configuring access point...");
+  /* You can remove the password parameter if you want the AP to be open. */
+  WiFi.softAP(ssidAP, passwordAP);
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+  Serial.println("");
+}
+/*
+ *=============================================================================
+ *NAME:         
+ *
+ *DESCRIPTION:  
+ *=============================================================================
+*/
+int setup_STATION(){
+  
+  Serial.println();
+  Serial.print("Configuring station...");
+  /* You can remove the password parameter if you want the AP to be open. */
+  WiFi.begin(ssidSTAT, passwordSTAT);
+  // Wait for connection
+  double initTime = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    analogWrite(lamp,200);
+    delay(200);
+    analogWrite(lamp,0);
+    delay(200);
+    if((millis() - initTime) > 8000) {
+      Serial.println("Connection Failed!");
+      analogWrite(lamp,0);
+      return -1;
+    }  
+  }
+  analogWrite(lamp,1023);
+  IPAddress myIP = WiFi.localIP();
+  Serial.println("Connected!");
+  Serial.print("IP address: ");
+  Serial.println(myIP);
+  myIP = WiFi.subnetMask();  
+  Serial.print("SubnetMask: ");
+  Serial.println(myIP);
+  myIP = WiFi.gatewayIP();  
+  Serial.print("Gateway Ip: ");
+  Serial.println(myIP);
+  
+  Serial.println("");
+  return 0;
+}
+/*
+ *=============================================================================
+ *NAME:         
+ *
+ *DESCRIPTION:  
+ *=============================================================================
+*/
+void readBoardConfig(void)
+{
+  int idcheck = EEPROM.read(EE_ID_ADDR);
+  int index;
+  
+  //Serial.print("Read eeprom: ");
+  //Serial.println(idcheck);
+  
+  if (idcheck == ID){
+    // Load atype
+    for ( index = 0; index < TY_LEN; index++){
+      atype[index] = EEPROM.read(EE_A_TYPE + index);
+    }    
+    // Load ahour
+    for ( index = 0; index < HR_LEN; index++){
+      ahour[index] = EEPROM.read(EE_HOUR + index);
+    }    
+    //Serial.print("Load recorded");
+    // Load WIFI SSID
+    for ( index = 0; index < ID_LEN; index++){
+      ssidSTAT[index] = EEPROM.read(EE_WIFI_SSID + index);
+    }
+    // Load WIFI PASS
+    for ( index = 0; index < ID_LEN; index++){
+      passwordSTAT[index] = EEPROM.read(EE_WIFI_PASS + index);
+    }
+    // Load MAC Address from EEPROM
+    for ( index = 0; index < 6; index++){
+      mac[index] = EEPROM.read(EE_MAC_ADDR + index);
+    }
+
+    // Load IP Address from EEPROM
+    for ( index = 0; index < 4; index++){
+      ip[index] = EEPROM.read(EE_IP_ADDR + index);
+    }
+
+    // Load SUBNET Address from EEPROM
+    for ( index = 0; index < 4; index++){
+      subnet[index] = EEPROM.read(EE_MASK_ADDR + index);
+    }
+
+    // Load Gateway Address from EEPROM
+    for ( index = 0; index < 4; index++){
+      gateway[index] = EEPROM.read(EE_GW_ADDR + index);
+    }
+  }
+  else
+  {
+    //Serial.println("Load Default");
+  }
+}
+/*
+ *=============================================================================
+ *NAME:         
+ *
+ *DESCRIPTION:  
+ *=============================================================================
+*/
+void saveBoardConfig(void)
+{
+  int index;
+  Serial.println("Save board config");
+
+  // Save Wifi atype in EEPROM
+  for ( index = 0 ; index < TY_LEN; index++)
+    EEPROM.write(EE_A_TYPE + index, atype[index]);
+
+  // Save Wifi ahour in EEPROM
+  for ( index = 0 ; index < HR_LEN; index++)
+    EEPROM.write(EE_HOUR + index, ahour[index]);
+  
+  // Save Wifi SSID in EEPROM
+  for ( index = 0 ; index < ID_LEN; index++)
+    EEPROM.write(EE_WIFI_SSID + index, ssidSTAT[index]);
+  
+  // Save Wifi PASS in EEPROM
+  for ( index = 0 ; index < ID_LEN; index++)
+    EEPROM.write(EE_WIFI_PASS + index, passwordSTAT[index]);
+  
+  // Save MAC Address in EEPROM
+  for ( index = 0 ; index < 6; index++)
+    EEPROM.write(EE_MAC_ADDR + index, mac[index]);
+
+  // Save IP Address in EEPROM
+  for ( index = 0 ; index < 4; index++)
+    EEPROM.write(EE_IP_ADDR + index, ip[index]);
+
+  // Save Subnet Mask in EEPROM
+  for ( index = 0 ; index < 4; index++)
+    EEPROM.write(EE_MASK_ADDR + index, subnet[index]);
+
+  // Save Gateway Address in EEPROM
+  for ( index = 0 ; index < 4; index++)
+    EEPROM.write(EE_GW_ADDR + index, gateway[index]);
+
+  // set ID to the known bit, so when you reset the Arduino is will use the EEPROM values
+  EEPROM.write(EE_ID_ADDR, ID); 
+  EEPROM.commit();
+  delay(300);
+} 
 /*
  *=============================================================================
  *NAME:         void setup(void){
@@ -263,22 +683,21 @@ void setup(void)
   digitalWrite(led, 1);
 
   pinMode(lamp, OUTPUT);
-  digitalWrite(lamp, 0);  
-  
+  digitalWrite(lamp, 0);
+    
   Serial.begin(115200);
 
-  Serial.println();
-  Serial.print("Configuring access point...");
+  EEPROM.begin(512);  
+  readBoardConfig();
 
-  /* You can remove the password parameter if you want the AP to be open. */
-  WiFi.softAP(ssid, password);
-  IPAddress myIP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(myIP);
+  ESP.eraseConfig();
+  WiFi.setAutoConnect(false); 
 
-  Serial.println("");
-  
+  setup_STATION();
+
   server.on("/", handleRoot);
+  server.on("/load", handleLoad);
+  server.on("/conf", handleConf);
   server.on("/sensor", handleSensor);
   server.on("/cmd1", handleCmd1);
   server.on("/10", handleCmd10);
@@ -301,4 +720,15 @@ void setup(void)
 void loop(void)
 {
   server.handleClient();
+
+  //Depuracao
+  if(Serial.available()){
+    byte valor = Serial.read();
+    switch (valor){
+      case '1':           
+      break;
+      case '2':           
+      break;     
+    }
+  }        
 }
