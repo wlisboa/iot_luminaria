@@ -2,6 +2,17 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+
+WiFiUDP ntpUDP;
+ 
+int16_t utc = -4; //UTC -4:00 Brazil
+uint32_t currentMillis = 0;
+uint32_t previousMillis = 0;
+boolean bAlarme;  
+NTPClient timeClient(ntpUDP, "a.st1.ntp.br", utc*3600, 60000);
+
 
 //************************************************************
 // Define Area
@@ -59,7 +70,7 @@ pagina_resposta +=        "<header>";
 pagina_resposta +=            "<h1> Lumin&aacute;ria </h1>";
 pagina_resposta +=        "</header>";
 pagina_resposta +=       "<main>";
-pagina_resposta +=       "<p>Configura&ccedil;&atilde;o enviada com sucesso! Reinicie o dispositivo e conecte-se novamente.</p>";
+pagina_resposta +=       "<p>Configura&ccedil;&atilde;o enviada com sucesso!</p>";
 pagina_resposta +=       "</main>";
 pagina_resposta +=        "<footer>";
 pagina_resposta +=            "<p>Criado por: Washington Lisboa</p>";
@@ -327,7 +338,7 @@ pagina_root += "</html>";
 void handleRoot() {
     
   digitalWrite(led, 0);
-  server.send(200, "text/html", monta_index());
+  server.send(200, "text/html", monta_pagina());
   digitalWrite(led, 1);
 }
 /*
@@ -374,8 +385,10 @@ void handleConf(){
   Serial.println("Handle Config");
   if (server.hasArg("desp")){
       sArg = server.arg("desp");
-      Serial.println(sArg);
+      sArg.toCharArray(atype, TY_LEN); 
+      Serial.println(sArg);      
       sArg = server.arg("time");
+      sArg.toCharArray(ahour, HR_LEN);
       Serial.println(sArg);
       sArg = server.arg("rede");
       Serial.println(sArg);
@@ -389,9 +402,13 @@ void handleConf(){
       Serial.println(subnet);
       gateway.fromString(server.arg("gatw"));
       Serial.println(gateway);                         
-  }
-  saveBoardConfig();
-  server.send(200, "text/html", monta_resposta_config());
+      saveBoardConfig();
+      server.send(200, "text/html", monta_resposta_config());
+   }
+   else
+   {
+      server.send(200, "text/html", monta_index());
+   }
 }
 /*
  *=============================================================================
@@ -511,8 +528,12 @@ void handleNotFound(){
 */
 void setup_AP(){
 
+  WiFi.disconnect(true);
+  delay(200);
+  WiFi.mode(WIFI_AP);
+  
   Serial.println();
-  Serial.print("Configuring access point...");
+  Serial.println("Configuring access point...");
   /* You can remove the password parameter if you want the AP to be open. */
   WiFi.softAP(ssidAP, passwordAP);
   IPAddress myIP = WiFi.softAPIP();
@@ -530,9 +551,12 @@ void setup_AP(){
 int setup_STATION(){
   
   Serial.println();
-  Serial.print("Configuring station...");
+  Serial.println("Configuring station...");
   /* You can remove the password parameter if you want the AP to be open. */
   WiFi.begin(ssidSTAT, passwordSTAT);
+  delay(100);
+  WiFi.config(ip, gateway, subnet);
+  
   // Wait for connection
   double initTime = millis();
   while (WiFi.status() != WL_CONNECTED) {
@@ -689,11 +713,15 @@ void setup(void)
 
   EEPROM.begin(512);  
   readBoardConfig();
-
+  
   ESP.eraseConfig();
-  WiFi.setAutoConnect(false); 
+  WiFi.setAutoConnect(false);
+  delay(300); 
 
-  setup_STATION();
+  readBoardConfig();
+  if ( setup_STATION() == -1){
+    setup_AP();
+  }
 
   server.on("/", handleRoot);
   server.on("/load", handleLoad);
@@ -708,6 +736,63 @@ void setup(void)
 
   server.begin();
   Serial.println("HTTP server started");
+  
+  timeClient.begin();
+  timeClient.update();
+  bAlarme = false;
+}
+/*
+ *=============================================================================
+ *NAME:         
+ *
+ *DESCRIPTION:   
+ *=============================================================================
+*/
+void checkALARM(void) {
+  currentMillis = millis();//Tempo atual em ms
+  String fTime, sAHour;
+  static int iCount = 10;
+  static boolean bBlink = false;
+  //Lógica de verificação do tempo
+  if (bAlarme == false)
+  {
+    if (currentMillis - previousMillis > 1000)
+    {
+        previousMillis = currentMillis;    // Salva o tempo atual
+        fTime = timeClient.getFormattedTime();
+        sAHour = ahour;
+        Serial.println(fTime.substring(0,5));
+        if (fTime.substring(0,5)==sAHour)
+        {
+            bAlarme = true;
+            Serial.println("Alarme");
+        }
+     }
+  }
+  else // bAlarme == true
+  {
+    if (currentMillis - previousMillis > 800)
+    {
+      previousMillis = currentMillis;    // Salva o tempo atual
+      if (bBlink == false)
+      {
+        bBlink = true;
+        analogWrite(lamp,800);
+        Serial.println("Alarme ON");
+        if ((iCount--) <= 0)
+        {
+          bAlarme = false;
+          iCount = 10;
+        }               
+      }
+      else
+      {
+        bBlink = false;
+        Serial.println("Alarme Off");       
+        analogWrite(lamp,0);
+      }  
+    }
+  }
 }
 /*
  *=============================================================================
@@ -720,12 +805,15 @@ void setup(void)
 void loop(void)
 {
   server.handleClient();
-
+  checkALARM();
+  
   //Depuracao
   if(Serial.available()){
     byte valor = Serial.read();
     switch (valor){
-      case '1':           
+      case '1':
+        timeClient.update();
+        Serial.println(timeClient.getFormattedTime());           
       break;
       case '2':           
       break;     
