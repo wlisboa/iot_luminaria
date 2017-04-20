@@ -55,6 +55,7 @@ ESP8266WebServer server(80);
 
 const int led = 0;
 const int lamp =5;
+const int buzzer =16;
 
 String monta_resposta_config(){
   
@@ -71,6 +72,9 @@ pagina_resposta +=            "<h1> Lumin&aacute;ria </h1>";
 pagina_resposta +=        "</header>";
 pagina_resposta +=       "<main>";
 pagina_resposta +=       "<p>Configura&ccedil;&atilde;o enviada com sucesso!</p>";
+pagina_resposta +=       "<form method=\"POST\" action=\"/\" >";
+pagina_resposta +=            "<input class=\"sub1\" type=\"submit\" value=\"Voltar\">"; 
+pagina_resposta +=       "</form>";
 pagina_resposta +=       "</main>";
 pagina_resposta +=        "<footer>";
 pagina_resposta +=            "<p>Criado por: Washington Lisboa</p>";
@@ -221,108 +225,117 @@ pagina_root +=        "<meta charset=\"uft=8\">";
 pagina_root +=        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
 pagina_root +=    "</head>";
 pagina_root +=    "<body>";
-pagina_root +=    	"<header>";
-pagina_root +=    		"<h1> Lumin&aacute;ria </h1>";
-pagina_root +=    	"</header>";
-pagina_root +=    	"<main>";
-pagina_root +=    		"<div>";
-pagina_root +=    			"<p>Demonstra&ccedil;&atilde;o IOT</p>";
-pagina_root +=    		"</div>";
-pagina_root +=    		"<div class=\"sens-area\">";
-pagina_root +=    			"<button type=button onclick=\"sensor()\">Ler Sensor</button>";
-pagina_root +=    			"<p id=\"sensor\">valor lido</p>";
-pagina_root +=    		"</div>";
-pagina_root +=    		"<div class=\"cmd-area\">";
-pagina_root +=    			"<button type=\"button\" id=\"btn1\" onclick=\"comando()\">Liga</button>";
-pagina_root +=    		"</div>";
-pagina_root +=    		"<div class=\"cmd-area\">";
-pagina_root +=    			"<button type=\"button\" id=\"1\" onclick=\"dimmer(this)\">10%</button>";
-pagina_root +=    			"<button type=\"button\" id=\"2\" onclick=\"dimmer(this)\">25%</button>";
-pagina_root +=    			"<button type=\"button\" id=\"3\" onclick=\"dimmer(this)\">50%</button>";
-pagina_root +=    			"<button type=\"button\" id=\"4\" onclick=\"dimmer(this)\">80%</button>";
-pagina_root +=    		"</div>";
-pagina_root +=    	"</main>";
-pagina_root +=    	"<footer>";
-pagina_root +=    		"<p>instrutor: Washington Lisboa</p>";
-pagina_root +=    		"<a href=\"https://github.com/wlisboa/iot_web_server\">fonte do codigo</a>";
-pagina_root +=    	"</footer>";
+pagina_root +=      "<header>";
+pagina_root +=          "<h1> Lumin&aacute;ria </h1>";
+pagina_root +=      "</header>";
+pagina_root +=      "<main>";
+pagina_root +=          "<div>";
+pagina_root +=              "<p>Demonstra&ccedil;&atilde;o IOT</p>";
+pagina_root +=          "</div>";
+pagina_root +=          "<div class=\"sens-area\">";
+pagina_root +=              "<button type=button onclick=\"sensor()\">Ler Hora</button>";
+pagina_root +=              "<p id=\"sensor\">valor lido</p>";
+pagina_root +=          "</div>";
+pagina_root +=          "<div class=\"cmd-area\">";
+pagina_root +=              "<button type=\"button\" id=\"btn1\" onclick=\"comando()\">Liga</button>";
+pagina_root +=          "</div>";
+pagina_root +=        "<div class=\"cmd-area\">";
+pagina_root +=          "<button type=\"button\" id=\"buzz\" onclick=\"buzzer()\">Buzina</button>";
+pagina_root +=        "</div>";
+pagina_root +=          "<div class=\"cmd-area\">";
+pagina_root +=              "<button type=\"button\" id=\"1\" onclick=\"dimmer(this)\">25%</button>";
+pagina_root +=              "<button type=\"button\" id=\"2\" onclick=\"dimmer(this)\">50%</button>";
+pagina_root +=              "<button type=\"button\" id=\"3\" onclick=\"dimmer(this)\">80%</button>";
+pagina_root +=          "</div>";
+pagina_root +=      "</main>";
+pagina_root +=      "<footer>";
+pagina_root +=          "<p>Criado por: Washington Lisboa</p>";
+pagina_root +=          "<a href=\"https://github.com/wlisboa/iot_luminaria\">fonte do codigo</a>";
+pagina_root +=      "</footer>";
 pagina_root +=    "</body>";
-pagina_root +=    	"<script>";
-pagina_root +=			"function sensor() {";
-pagina_root +=				"var xhttp = new XMLHttpRequest();";
-pagina_root +=				"xhttp.onreadystatechange = function()";
-pagina_root +=				"{";
-pagina_root +=					"if (xhttp.readyState == 4 && xhttp.status == 200)";
-pagina_root +=					"{";
-pagina_root +=						"document.getElementById(\"sensor\").innerHTML = xhttp.responseText;";
-pagina_root +=					"}";
-pagina_root +=				"};";
-pagina_root +=				"xhttp.open(\"POST\", \"/sensor\", true);";
-pagina_root +=				"xhttp.send();";
-pagina_root +=			"}";
-pagina_root +=			"function comando() {";
-pagina_root +=				"var xhttp = new XMLHttpRequest();";
-pagina_root +=				"xhttp.onreadystatechange = function()";
-pagina_root +=				"{";
-pagina_root +=					"if (xhttp.readyState == 4 && xhttp.status == 200)";
-pagina_root +=					"{";
-pagina_root +=						"document.getElementById(\"btn1\").innerHTML = xhttp.responseText;";
-pagina_root +=					"}";
-pagina_root +=				"};";
-pagina_root +=				"xhttp.open(\"POST\", \"/cmd1\", true);";
-pagina_root +=				"xhttp.send();";
-pagina_root +=			"}";
-pagina_root +=			"function dimmer(button){";
-pagina_root +=				"if (button.id=='1'){";
-pagina_root +=				    "var xhttp=new XMLHttpRequest();";   
-pagina_root +=				    "xhttp.open(\"POST\",\"/10\",true);";
-pagina_root +=				    "xhttp.send();";
-pagina_root +=			        "}";
-pagina_root +=				"if (button.id=='2'){";
-pagina_root +=				    "var xhttp = new XMLHttpRequest();";   
-pagina_root +=				    "xhttp.open(\"POST\", \"/25\", true);";
-pagina_root +=				    "xhttp.send();";
-pagina_root +=			        "}";
-pagina_root +=				"if (button.id=='3'){";
-pagina_root +=				    "var xhttp = new XMLHttpRequest();";   
-pagina_root +=				    "xhttp.open(\"POST\", \"/50\", true);";
-pagina_root +=				    "xhttp.send();";
-pagina_root +=			        "}";
-pagina_root +=				"if (button.id=='4'){";
-pagina_root +=				    "var xhttp = new XMLHttpRequest();";   
-pagina_root +=				    "xhttp.open(\"POST\", \"/80\", true);";
-pagina_root +=				    "xhttp.send();";
-pagina_root +=			        "}";	
-pagina_root +=			"}";
-pagina_root +=		"</script>";
-pagina_root +=		"<style>";
-pagina_root +=			"body {";
-pagina_root +=				"text-align: center;";
-pagina_root +=			"}";
-pagina_root +=			"button {";
-pagina_root +=				"height: 50px;";
-pagina_root +=  				"width: 150px;";
-pagina_root +=			"}";
-pagina_root +=			"header {";
-pagina_root +=				"padding-top: 5px;";
-pagina_root +=				"border-bottom: 2px solid #000;";
-pagina_root +=				"background-color: #38C2B3;";
-pagina_root +=			"}";
-pagina_root +=			"main {";
-pagina_root +=				"border-bottom: 2px solid #000;";
-pagina_root +=			"}";
-pagina_root +=			".sens-area{";
-pagina_root +=				"border-bottom: 2px solid #000;";
-pagina_root +=			"}";
-pagina_root +=			".cmd-area{";
-pagina_root +=				"display: fex;";
-pagina_root +=				"align-items: center;";
-pagina_root +=				"justify-content: space-between;";
-pagina_root +=				"border-bottom: 2px solid #000;";
-pagina_root +=				"padding-top: 10px;";
-pagina_root +=				"padding-bottom: 10px;";
-pagina_root +=			"}";
-pagina_root +=		"</style>";
+pagina_root +=      "<script>";
+pagina_root +=          "function sensor() {";
+pagina_root +=              "var xhttp = new XMLHttpRequest();";
+pagina_root +=              "xhttp.onreadystatechange = function()";
+pagina_root +=              "{";
+pagina_root +=                  "if (xhttp.readyState == 4 && xhttp.status == 200)";
+pagina_root +=                  "{";
+pagina_root +=                      "document.getElementById(\"sensor\").innerHTML = xhttp.responseText;";
+pagina_root +=                  "}";
+pagina_root +=              "};";
+pagina_root +=              "xhttp.open(\"POST\",\"/sensor\",true);";
+pagina_root +=              "xhttp.send();";
+pagina_root +=          "}";
+pagina_root +=          "function comando() {";
+pagina_root +=              "var xhttp = new XMLHttpRequest();";
+pagina_root +=              "xhttp.onreadystatechange = function()";
+pagina_root +=              "{";
+pagina_root +=                  "if (xhttp.readyState == 4 && xhttp.status == 200)";
+pagina_root +=                  "{";
+pagina_root +=                      "document.getElementById(\"btn1\").innerHTML = xhttp.responseText;";
+pagina_root +=                  "}";
+pagina_root +=              "};";
+pagina_root +=              "xhttp.open(\"POST\",\"/cmd1\",true);";
+pagina_root +=              "xhttp.send();";
+pagina_root +=          "}";
+pagina_root +=      "function buzzer() {";
+pagina_root +=        "var xhttp = new XMLHttpRequest();";
+pagina_root +=        "xhttp.onreadystatechange = function()";
+pagina_root +=        "{";
+pagina_root +=          "if (xhttp.readyState == 4 && xhttp.status == 200)";
+pagina_root +=          "{";
+pagina_root +=            "document.getElementById(\"btn1\").innerHTML = xhttp.responseText;";
+pagina_root +=          "}";
+pagina_root +=        "};";
+pagina_root +=        "xhttp.open(\"POST\",\"/buzzer\",true);";
+pagina_root +=        "xhttp.send();";
+pagina_root +=      "}";
+pagina_root +=          "function dimmer(button){";
+pagina_root +=              "if (button.id=='1'){";
+pagina_root +=                  "var xhttp = new XMLHttpRequest();";
+pagina_root +=                  "xhttp.open(\"POST\", \"/25\", true);";
+pagina_root +=                  "xhttp.send();";
+pagina_root +=                  "}";
+pagina_root +=              "if (button.id=='2'){";
+pagina_root +=                  "var xhttp = new XMLHttpRequest();";
+pagina_root +=                  "xhttp.open(\"POST\", \"/50\", true);";
+pagina_root +=                  "xhttp.send();";
+pagina_root +=                  "}";
+pagina_root +=              "if (button.id=='3'){";
+pagina_root +=                  "var xhttp = new XMLHttpRequest();";
+pagina_root +=                  "xhttp.open(\"POST\", \"/80\", true);";
+pagina_root +=                  "xhttp.send();";
+pagina_root +=                  "}";
+pagina_root +=          "}";
+pagina_root +=      "</script>";
+pagina_root +=      "<style>";
+pagina_root +=          "body {";
+pagina_root +=              "text-align: center;";
+pagina_root +=          "}";
+pagina_root +=          "button {";
+pagina_root +=              "height: 50px;";
+pagina_root +=                  "width: 150px;";
+pagina_root +=          "}";
+pagina_root +=          "header {";
+pagina_root +=              "padding-top: 5px;";
+pagina_root +=              "border-bottom: 2px solid #000;";
+pagina_root +=              "background-color: #38C2B3;";
+pagina_root +=          "}";
+pagina_root +=          "main {";
+pagina_root +=              "border-bottom: 2px solid #000;";
+pagina_root +=          "}";
+pagina_root +=          ".sens-area{";
+pagina_root +=              "border-bottom: 2px solid #000;";
+pagina_root +=          "}";
+pagina_root +=          ".cmd-area{";
+pagina_root +=              "display: fex;";
+pagina_root +=              "align-items: center;";
+pagina_root +=              "justify-content: space-between;";
+pagina_root +=              "border-bottom: 2px solid #000;";
+pagina_root +=              "padding-top: 10px;";
+pagina_root +=              "padding-bottom: 10px;";
+pagina_root +=          "}";
+pagina_root +=      "</style>";
 pagina_root += "</html>";
 
   return pagina_root;
@@ -336,7 +349,7 @@ pagina_root += "</html>";
  *=============================================================================
 */
 void handleRoot() {
-    
+
   digitalWrite(led, 0);
   server.send(200, "text/html", monta_pagina());
   digitalWrite(led, 1);
@@ -419,11 +432,11 @@ void handleConf(){
 */
 void handleSensor() 
 {
-  float valor;
-  String convertido;
+  //float valor;
+  //String convertido;
   digitalWrite(led, 1);
-  convertido = "100";
-  server.send ( 200, "text/text", convertido); 
+  //convertido = "100";
+  server.send ( 200, "text/text", timeClient.getFormattedTime()); 
   digitalWrite(led, 1);
 }
 /*
@@ -457,9 +470,16 @@ void handleCmd1(){
  *DESCRIPTION:  
  *=============================================================================
 */
-void handleCmd10() {
-  Serial.println("Comando 10%");
-  analogWrite(lamp,40);
+void handleBuzzer() {
+  Serial.println("Buzzer");
+  
+  digitalWrite(buzzer,HIGH);
+  delay(200);
+  digitalWrite(buzzer,LOW);
+  delay(100);
+  digitalWrite(buzzer,HIGH);
+  delay(300);
+  digitalWrite(buzzer,LOW);
 }
 /*
  *=============================================================================
@@ -706,9 +726,14 @@ void setup(void)
   pinMode(led, OUTPUT);
   digitalWrite(led, 1);
 
+  analogWriteFreq(1000);
+
   pinMode(lamp, OUTPUT);
   digitalWrite(lamp, 0);
     
+  pinMode(buzzer, OUTPUT);
+  digitalWrite(buzzer, 0);
+  
   Serial.begin(115200);
 
   EEPROM.begin(512);  
@@ -728,7 +753,7 @@ void setup(void)
   server.on("/conf", handleConf);
   server.on("/sensor", handleSensor);
   server.on("/cmd1", handleCmd1);
-  server.on("/10", handleCmd10);
+  server.on("/buzzer", handleBuzzer);
   server.on("/25", handleCmd25);
   server.on("/50", handleCmd50);
   server.on("/80", handleCmd80);
@@ -750,8 +775,8 @@ void setup(void)
 */
 void checkALARM(void) {
   currentMillis = millis();//Tempo atual em ms
-  String fTime, sAHour;
-  static int iCount = 10;
+  String fTime, sAHour, sAType;
+  static int iCount;
   static boolean bBlink = false;
   //Lógica de verificação do tempo
   if (bAlarme == false)
@@ -761,36 +786,65 @@ void checkALARM(void) {
         previousMillis = currentMillis;    // Salva o tempo atual
         fTime = timeClient.getFormattedTime();
         sAHour = ahour;
-        Serial.println(fTime.substring(0,5));
-        if (fTime.substring(0,5)==sAHour)
+        sAHour += ":00";
+        //Serial.print("sAHour");
+        //Serial.println(sAHour);
+        //Serial.println(fTime);
+        if (fTime==sAHour) //.substring(0,5)
         {
             bAlarme = true;
+            iCount = 40;
             Serial.println("Alarme");
         }
      }
   }
   else // bAlarme == true
   {
-    if (currentMillis - previousMillis > 800)
+    sAType = atype;
+    if (sAType == "luz")
     {
-      previousMillis = currentMillis;    // Salva o tempo atual
-      if (bBlink == false)
-      {
-        bBlink = true;
-        analogWrite(lamp,800);
-        Serial.println("Alarme ON");
-        if ((iCount--) <= 0)
+        if (currentMillis - previousMillis > 500)
         {
-          bAlarme = false;
-          iCount = 10;
-        }               
-      }
-      else
-      {
-        bBlink = false;
-        Serial.println("Alarme Off");       
-        analogWrite(lamp,0);
-      }  
+          previousMillis = currentMillis;    // Salva o tempo atual
+          if (bBlink == false)
+          {
+            bBlink = true;
+            analogWrite(lamp,800);
+            Serial.println("Alarme ON");
+            iCount = iCount - 2; // O alarme pisca 20 vezes
+            if (iCount <= 0)
+            {
+              bAlarme = false;
+            }               
+          }
+          else{
+            bBlink = false;
+            Serial.println("Alarme Off");       
+            analogWrite(lamp,0);
+          }  
+        }
+    }
+    else{
+        if (currentMillis - previousMillis > 200)
+        {
+          previousMillis = currentMillis;    // Salva o tempo atual
+          if (bBlink == false)
+          {
+            bBlink = true;
+            digitalWrite(buzzer,HIGH);
+            Serial.println("Alarme ON");
+            if ((iCount--) <= 0)
+            {
+              bAlarme = false;
+              digitalWrite(buzzer,LOW);
+            }               
+          }
+          else{
+            bBlink = false;
+            Serial.println("Alarme Off");       
+            digitalWrite(buzzer,LOW);
+          }  
+        }      
     }
   }
 }
@@ -802,8 +856,11 @@ void checkALARM(void) {
  *              repetidamente. 
  *=============================================================================
 */
+
+static int valor1 = 0;
+
 void loop(void)
-{
+{  
   server.handleClient();
   checkALARM();
   
@@ -811,11 +868,9 @@ void loop(void)
   if(Serial.available()){
     byte valor = Serial.read();
     switch (valor){
-      case '1':
-        timeClient.update();
-        Serial.println(timeClient.getFormattedTime());           
+      case '1':           
       break;
-      case '2':           
+      case '2':          
       break;     
     }
   }        
