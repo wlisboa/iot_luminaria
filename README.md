@@ -1,13 +1,12 @@
-iot_luminaria
-=============
+#iot_luminaria
 
 Esse projeto consiste em um iot que pode ser controlado por requisições http. 
 
-# Hardware
+## Hardware
 
-- ESP8266
+- Espressif - ESP8266
 
-# Dependências
+## Dependências
 
 - [NTPClient.git](https://github.com/arduino-libraries/NTPClient.git)
 
