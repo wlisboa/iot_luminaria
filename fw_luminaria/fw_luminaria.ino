@@ -39,8 +39,8 @@ NTPClient timeClient(ntpUDP, "a.st1.ntp.br", utc*3600, 60000);
 const char *ssidAP     = "luminaria";
 const char *passwordAP = "";
 
-char ssidSTAT[ID_LEN]     = "Wlan_Lisboa";
-char passwordSTAT[ID_LEN] = "familia2015";
+char ssidSTAT[ID_LEN]     = "ssid";
+char passwordSTAT[ID_LEN] = "pass";
 
 char atype[TY_LEN] = "luz";
 char ahour[HR_LEN] = "06:00";
@@ -368,7 +368,7 @@ void handleLoad() {
   data =  atype;
   data += " ";
   data += ahour;
-  data += " "; 
+  data += " ";
   data += ssidSTAT;
   data += " ";
   data += passwordSTAT;
@@ -379,14 +379,14 @@ void handleLoad() {
   data += " ";
   data += gateway.toString();
 
-  Serial.println(data);     
-  server.send(200, "text/text", data);  
+  Serial.println(data);
+  server.send(200, "text/text", data);
 }
 /*
  *=============================================================================
  *NAME:         void handleLoad()
  *
- *DESCRIPTION:  
+ *DESCRIPTION:
  *
  *=============================================================================
 */
@@ -394,27 +394,27 @@ void handleConf(){
   String sArg, sSub;
   char cIp[20];
   int firstPoint;
-  
+
   Serial.println("Handle Config");
   if (server.hasArg("desp")){
       sArg = server.arg("desp");
-      sArg.toCharArray(atype, TY_LEN); 
-      Serial.println(sArg);      
+      sArg.toCharArray(atype, TY_LEN);
+      Serial.println(sArg);
       sArg = server.arg("time");
       sArg.toCharArray(ahour, HR_LEN);
       Serial.println(sArg);
       sArg = server.arg("rede");
       Serial.println(sArg);
-      sArg.toCharArray(ssidSTAT, ID_LEN);   
+      sArg.toCharArray(ssidSTAT, ID_LEN);
       sArg = server.arg("pass");
       Serial.println(sArg);
       sArg.toCharArray(passwordSTAT, ID_LEN);
-      ip.fromString(server.arg("ip"));           
+      ip.fromString(server.arg("ip"));
       Serial.println(ip);
       subnet.fromString(server.arg("subn"));
       Serial.println(subnet);
       gateway.fromString(server.arg("gatw"));
-      Serial.println(gateway);                         
+      Serial.println(gateway);
       saveBoardConfig();
       server.send(200, "text/html", monta_resposta_config());
    }
@@ -427,16 +427,16 @@ void handleConf(){
  *=============================================================================
  *NAME:         void handleSensor()
  *
- *DESCRIPTION:  
+ *DESCRIPTION:
  *=============================================================================
 */
-void handleSensor() 
+void handleSensor()
 {
   //float valor;
   //String convertido;
   digitalWrite(led, 1);
   //convertido = "100";
-  server.send ( 200, "text/text", timeClient.getFormattedTime()); 
+  server.send ( 200, "text/text", timeClient.getFormattedTime());
   digitalWrite(led, 1);
 }
 /*
@@ -446,22 +446,21 @@ void handleSensor()
  *DESCRIPTION:
  *=============================================================================
 */
-void handleCmd1(){ 
-  static int controle = 0;  
+void handleCmd1(){
+  static int controle = 0;
   digitalWrite(lamp, 0);
-  
-  Serial.println("Comando 1"); 
+
+  Serial.println("Comando 1");
   if (controle == 0){
     controle = 1;
     digitalWrite(lamp, 1);
     analogWrite(lamp,1023);
-    server.send ( 200, "text/text", "Desliga"); 
+    server.send ( 200, "text/text", "Desliga");
   }else{
     controle = 0;
     analogWrite(lamp,0);
-    server.send ( 200, "text/text", "Liga");     
+    server.send ( 200, "text/text", "Liga");
   }
-  
 }
 /*
  *=============================================================================
@@ -472,7 +471,6 @@ void handleCmd1(){
 */
 void handleBuzzer() {
   Serial.println("Buzzer");
-  
   digitalWrite(buzzer,HIGH);
   delay(200);
   digitalWrite(buzzer,LOW);
@@ -665,9 +663,9 @@ void readBoardConfig(void)
 }
 /*
  *=============================================================================
- *NAME:         
+ *NAME:
  *
- *DESCRIPTION:  
+ *DESCRIPTION:
  *=============================================================================
 */
 void saveBoardConfig(void)
@@ -682,15 +680,15 @@ void saveBoardConfig(void)
   // Save Wifi ahour in EEPROM
   for ( index = 0 ; index < HR_LEN; index++)
     EEPROM.write(EE_HOUR + index, ahour[index]);
-  
+
   // Save Wifi SSID in EEPROM
   for ( index = 0 ; index < ID_LEN; index++)
     EEPROM.write(EE_WIFI_SSID + index, ssidSTAT[index]);
-  
+
   // Save Wifi PASS in EEPROM
   for ( index = 0 ; index < ID_LEN; index++)
     EEPROM.write(EE_WIFI_PASS + index, passwordSTAT[index]);
-  
+
   // Save MAC Address in EEPROM
   for ( index = 0 ; index < 6; index++)
     EEPROM.write(EE_MAC_ADDR + index, mac[index]);
