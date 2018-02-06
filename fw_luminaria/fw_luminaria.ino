@@ -6,11 +6,11 @@
 #include <NTPClient.h>
 
 WiFiUDP ntpUDP;
- 
+
 int16_t utc = -4; //UTC -4:00 Brazil
 uint32_t currentMillis = 0;
 uint32_t previousMillis = 0;
-boolean bAlarme;  
+boolean bAlarme;
 NTPClient timeClient(ntpUDP, "a.st1.ntp.br", utc*3600, 60000);
 
 
