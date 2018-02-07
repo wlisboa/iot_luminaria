@@ -5,6 +5,8 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 
+#include "index.h"
+
 WiFiUDP ntpUDP;
 
 int16_t utc = -4; //UTC -4:00 Brazil
@@ -39,8 +41,8 @@ NTPClient timeClient(ntpUDP, "a.st1.ntp.br", utc*3600, 60000);
 const char *ssidAP     = "luminaria";
 const char *passwordAP = "";
 
-char ssidSTAT[ID_LEN]     = "ssid";
-char passwordSTAT[ID_LEN] = "pass";
+char ssidSTAT[ID_LEN]     = "";
+char passwordSTAT[ID_LEN] = "";
 
 char atype[TY_LEN] = "luz";
 char ahour[HR_LEN] = "06:00";
@@ -54,292 +56,9 @@ IPAddress gateway(192,168,0,1);
 ESP8266WebServer server(80);
 
 const int led = 0;
-const int lamp =5;
-const int buzzer =16;
+const int lamp = 5;
+const int buzzer = 16;
 
-String monta_resposta_config(){
-  
-String pagina_resposta= "<!DOCTYPE html>";
-pagina_resposta += "<html lang=\"pt-br\">";
-pagina_resposta +=     "<head>";
-pagina_resposta +=         "<title>IOT_CONFIG</title>";
-pagina_resposta +=         "<meta charset=\"uft=8\">";
-pagina_resposta +=         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
-pagina_resposta +=     "</head>";
-pagina_resposta +=     "<body>";
-pagina_resposta +=        "<header>";
-pagina_resposta +=            "<h1> Lumin&aacute;ria </h1>";
-pagina_resposta +=        "</header>";
-pagina_resposta +=       "<main>";
-pagina_resposta +=       "<p>Configura&ccedil;&atilde;o enviada com sucesso!</p>";
-pagina_resposta +=       "<form method=\"POST\" action=\"/\" >";
-pagina_resposta +=            "<input class=\"sub1\" type=\"submit\" value=\"Voltar\">"; 
-pagina_resposta +=       "</form>";
-pagina_resposta +=       "</main>";
-pagina_resposta +=        "<footer>";
-pagina_resposta +=            "<p>Criado por: Washington Lisboa</p>";
-pagina_resposta +=            "<a href=\"https://github.com/wlisboa/iot_luminaria\">fonte do codigo</a>";
-pagina_resposta +=        "</footer>";
-pagina_resposta +=     "</body>";
-pagina_resposta +=     "<style>";
-pagina_resposta +=        "body {";
-pagina_resposta +=            "text-align: center;";
-pagina_resposta +=        "}";
-pagina_resposta +=        "header {";
-pagina_resposta +=            "padding-top: 5px;";
-pagina_resposta +=            "border-bottom: 2px solid #000;";
-pagina_resposta +=            "background-color: #38C2B3;";
-pagina_resposta +=        "}";
-pagina_resposta +=        "main {";
-pagina_resposta +=            "border-bottom: 2px solid #000;";
-pagina_resposta +=        "}";
-pagina_resposta +=     "</style>";
-pagina_resposta +="</html>";
-return pagina_resposta;
-}
-
-
-String monta_index(){
-  
-String pagina_index = "<!DOCTYPE html>";
-pagina_index += "<html lang=\"pt-br\">";
-pagina_index +=     "<head>";
-pagina_index +=         "<title>IOT_CONFIG</title>";
-pagina_index +=         "<meta charset=\"uft=8\">";
-pagina_index +=         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
-pagina_index +=     "</head>";
-pagina_index +=     "<body onload=\"load()\">";
-pagina_index +=       "<header>";
-pagina_index +=         "<h1> Lumin&aacute;ria </h1>";
-pagina_index +=       "</header>";
-pagina_index +=       "<main>";
-pagina_index +=        "<form class=\"form-conf\" method=\"POST\" action=\"/conf\" >";
-pagina_index +=             "<div>";
-pagina_index +=                 "<h3>Configura&ccedil;&atilde;o do despertador</h3>";
-pagina_index +=                 "<select id=\"desp\" name=\"desp\">";
-pagina_index +=                     "<option value=\"luz\">Luz</option>";
-pagina_index +=                     "<option value=\"som\">Som</option>";
-pagina_index +=                 "</select>";
-pagina_index +=                 "<label>Hora:</label>";
-pagina_index +=                 "<input type=\"time\" id=\"time\" name=\"time\">";
-pagina_index +=             "</div>";
-pagina_index +=             "<div>";
-pagina_index +=                 "<h3>Configura&ccedil;&atilde;o da rede</h3>";
-
-pagina_index +=                 "<label>Nome da rede:</label>";
-pagina_index +=                 "<div class=\"data\">";
-pagina_index +=                     "<input type=\"text\" id=\"rede\" name=\"rede\">";
-pagina_index +=                 "</div>";
-
-pagina_index +=                 "<label>Senha:</label>";
-pagina_index +=                 "<div class=\"data\">";
-pagina_index +=                     "<input type=\"password\" id=\"pass\" name=\"pass\">";
-pagina_index +=                 "</div>";
-
-pagina_index +=                 "<label>IP:</label>";
-pagina_index +=                 "<div class=\"data\">";
-pagina_index +=                     "<input id=\"ip\" name=\"ip\" required pattern=\"^([0-9]{1,3}\.){3}[0-9]{1,3}$\">";
-pagina_index +=                 "</div>";
-
-pagina_index +=                 "<label>Subnet Mask:</label>";
-pagina_index +=                  "<div class=\"data\">";
-pagina_index +=                     "<input id=\"subn\" name=\"subn\" required pattern=\"^([0-9]{1,3}\.){3}[0-9]{1,3}$\">";
-pagina_index +=                  "</div>";
-
-pagina_index +=                 "<label>Gateway:</label>";
-pagina_index +=                 "<div class=\"data\">";
-pagina_index +=                     "<input id=\"gatw\" name=\"gatw\" required pattern=\"^([0-9]{1,3}\.){3}[0-9]{1,3}$\">";
-pagina_index +=                 "</div>";
-pagina_index +=                 "<div class=\"d-sub1\">";
-pagina_index +=                     "<input class=\"sub1\" type=\"submit\" value=\"Enviar\">";
-pagina_index +=                 "</div>";
-pagina_index +=             "</div>";
-pagina_index +=         "</form>";
-pagina_index +=       "</main>";
-pagina_index +=       "<footer>";
-pagina_index +=         "<p>Criado por: Washington Lisboa</p>";
-pagina_index +=         "<a href=\"https://github.com/wlisboa/iot_luminaria\">fonte do codigo</a>";
-pagina_index +=       "</footer>";
-pagina_index +=     "</body>";
-pagina_index +=       "<script>";
-pagina_index +=       "function load() {";
-pagina_index +=         "var xhttp = new XMLHttpRequest();";
-pagina_index +=         "xhttp.onreadystatechange = function()";
-pagina_index +=         "{";
-pagina_index +=           "if (xhttp.readyState == 4 && xhttp.status == 200)";
-pagina_index +=           "{";
-pagina_index +=               "var data = xhttp.responseText;";
-pagina_index +=               "var data_s = data.split(\" \");";
-pagina_index +=               "document.getElementById(\"desp\").value = data_s[0];";
-pagina_index +=               "document.getElementById(\"time\").value = data_s[1];";
-pagina_index +=               "document.getElementById(\"rede\").value = data_s[2];";
-pagina_index +=               "document.getElementById(\"pass\").value = data_s[3];";
-pagina_index +=               "document.getElementById(\"ip\").value = data_s[4];";
-pagina_index +=               "document.getElementById(\"subn\").value = data_s[5];";
-pagina_index +=               "document.getElementById(\"gatw\").value = data_s[6];";
-pagina_index +=           "}";
-pagina_index +=        "};";
-pagina_index +=         "xhttp.open(\"POST\", \"/load\", true);";
-pagina_index +=         "xhttp.send();";
-pagina_index +=       "}";
-pagina_index +=     "</script>";
-pagina_index +=     "<style>";
-pagina_index +=       "body {";
-pagina_index +=           "text-align: center;";
-pagina_index +=       "}";
-pagina_index +=       "header {";
-pagina_index +=           "padding-top: 2px;";
-pagina_index +=           "background-color: #38C2B3;";
-pagina_index +=           "border-bottom: 2px solid #666;";
-pagina_index +=       "}";
-pagina_index +=       "main {";
-pagina_index +=           "border-bottom: 2px solid #666;";
-pagina_index +=       "}";
-pagina_index +=       ".data{";
-pagina_index +=           "padding-bottom: 5px;";
-pagina_index +=       "}";
-pagina_index +=       ".data input{";
-pagina_index +=           "font-size: 16px;";
-pagina_index +=       "}";
-pagina_index +=       ".form-conf .d-sub1{";
-pagina_index +=           "padding-top: 20px;";
-pagina_index +=           "padding-bottom: 20px;";
-pagina_index +=       "}";
-pagina_index +=       ".form-conf .d-sub1 .sub1{";
-pagina_index +=           "font-size: 25px;";
-pagina_index +=           "width: 150px;";
-pagina_index +=       "}";
-pagina_index +=     "</style>";
-pagina_index +=  "</html>";
-
-return pagina_index;
-}
-
-String monta_pagina()
-{
-String pagina_root = "<!DOCTYPE html>";
-pagina_root += "<html lang=\"pt-br\">";
-pagina_root +=               "<head>";
-pagina_root +=        "<title>Luminaria</title>";
-pagina_root +=        "<meta charset=\"uft=8\">";
-pagina_root +=        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
-pagina_root +=    "</head>";
-pagina_root +=    "<body>";
-pagina_root +=      "<header>";
-pagina_root +=          "<h1> Lumin&aacute;ria </h1>";
-pagina_root +=      "</header>";
-pagina_root +=      "<main>";
-pagina_root +=          "<div>";
-pagina_root +=              "<p>Demonstra&ccedil;&atilde;o IOT</p>";
-pagina_root +=          "</div>";
-pagina_root +=          "<div class=\"sens-area\">";
-pagina_root +=              "<button type=button onclick=\"sensor()\">Ler Hora</button>";
-pagina_root +=              "<p id=\"sensor\">valor lido</p>";
-pagina_root +=          "</div>";
-pagina_root +=          "<div class=\"cmd-area\">";
-pagina_root +=              "<button type=\"button\" id=\"btn1\" onclick=\"comando()\">Liga</button>";
-pagina_root +=          "</div>";
-pagina_root +=        "<div class=\"cmd-area\">";
-pagina_root +=          "<button type=\"button\" id=\"buzz\" onclick=\"buzzer()\">Buzina</button>";
-pagina_root +=        "</div>";
-pagina_root +=          "<div class=\"cmd-area\">";
-pagina_root +=              "<button type=\"button\" id=\"1\" onclick=\"dimmer(this)\">25%</button>";
-pagina_root +=              "<button type=\"button\" id=\"2\" onclick=\"dimmer(this)\">50%</button>";
-pagina_root +=              "<button type=\"button\" id=\"3\" onclick=\"dimmer(this)\">80%</button>";
-pagina_root +=          "</div>";
-pagina_root +=      "</main>";
-pagina_root +=      "<footer>";
-pagina_root +=          "<p>Criado por: Washington Lisboa</p>";
-pagina_root +=          "<a href=\"https://github.com/wlisboa/iot_luminaria\">fonte do codigo</a>";
-pagina_root +=      "</footer>";
-pagina_root +=    "</body>";
-pagina_root +=      "<script>";
-pagina_root +=          "function sensor() {";
-pagina_root +=              "var xhttp = new XMLHttpRequest();";
-pagina_root +=              "xhttp.onreadystatechange = function()";
-pagina_root +=              "{";
-pagina_root +=                  "if (xhttp.readyState == 4 && xhttp.status == 200)";
-pagina_root +=                  "{";
-pagina_root +=                      "document.getElementById(\"sensor\").innerHTML = xhttp.responseText;";
-pagina_root +=                  "}";
-pagina_root +=              "};";
-pagina_root +=              "xhttp.open(\"POST\",\"/sensor\",true);";
-pagina_root +=              "xhttp.send();";
-pagina_root +=          "}";
-pagina_root +=          "function comando() {";
-pagina_root +=              "var xhttp = new XMLHttpRequest();";
-pagina_root +=              "xhttp.onreadystatechange = function()";
-pagina_root +=              "{";
-pagina_root +=                  "if (xhttp.readyState == 4 && xhttp.status == 200)";
-pagina_root +=                  "{";
-pagina_root +=                      "document.getElementById(\"btn1\").innerHTML = xhttp.responseText;";
-pagina_root +=                  "}";
-pagina_root +=              "};";
-pagina_root +=              "xhttp.open(\"POST\",\"/cmd1\",true);";
-pagina_root +=              "xhttp.send();";
-pagina_root +=          "}";
-pagina_root +=      "function buzzer() {";
-pagina_root +=        "var xhttp = new XMLHttpRequest();";
-pagina_root +=        "xhttp.onreadystatechange = function()";
-pagina_root +=        "{";
-pagina_root +=          "if (xhttp.readyState == 4 && xhttp.status == 200)";
-pagina_root +=          "{";
-pagina_root +=            "document.getElementById(\"btn1\").innerHTML = xhttp.responseText;";
-pagina_root +=          "}";
-pagina_root +=        "};";
-pagina_root +=        "xhttp.open(\"POST\",\"/buzzer\",true);";
-pagina_root +=        "xhttp.send();";
-pagina_root +=      "}";
-pagina_root +=          "function dimmer(button){";
-pagina_root +=              "if (button.id=='1'){";
-pagina_root +=                  "var xhttp = new XMLHttpRequest();";
-pagina_root +=                  "xhttp.open(\"POST\", \"/25\", true);";
-pagina_root +=                  "xhttp.send();";
-pagina_root +=                  "}";
-pagina_root +=              "if (button.id=='2'){";
-pagina_root +=                  "var xhttp = new XMLHttpRequest();";
-pagina_root +=                  "xhttp.open(\"POST\", \"/50\", true);";
-pagina_root +=                  "xhttp.send();";
-pagina_root +=                  "}";
-pagina_root +=              "if (button.id=='3'){";
-pagina_root +=                  "var xhttp = new XMLHttpRequest();";
-pagina_root +=                  "xhttp.open(\"POST\", \"/80\", true);";
-pagina_root +=                  "xhttp.send();";
-pagina_root +=                  "}";
-pagina_root +=          "}";
-pagina_root +=      "</script>";
-pagina_root +=      "<style>";
-pagina_root +=          "body {";
-pagina_root +=              "text-align: center;";
-pagina_root +=          "}";
-pagina_root +=          "button {";
-pagina_root +=              "height: 50px;";
-pagina_root +=                  "width: 150px;";
-pagina_root +=          "}";
-pagina_root +=          "header {";
-pagina_root +=              "padding-top: 5px;";
-pagina_root +=              "border-bottom: 2px solid #000;";
-pagina_root +=              "background-color: #38C2B3;";
-pagina_root +=          "}";
-pagina_root +=          "main {";
-pagina_root +=              "border-bottom: 2px solid #000;";
-pagina_root +=          "}";
-pagina_root +=          ".sens-area{";
-pagina_root +=              "border-bottom: 2px solid #000;";
-pagina_root +=          "}";
-pagina_root +=          ".cmd-area{";
-pagina_root +=              "display: fex;";
-pagina_root +=              "align-items: center;";
-pagina_root +=              "justify-content: space-between;";
-pagina_root +=              "border-bottom: 2px solid #000;";
-pagina_root +=              "padding-top: 10px;";
-pagina_root +=              "padding-bottom: 10px;";
-pagina_root +=          "}";
-pagina_root +=      "</style>";
-pagina_root += "</html>";
-
-  return pagina_root;
-}
 /*
  *=============================================================================
  *NAME:         void handleRoot()
@@ -348,12 +67,14 @@ pagina_root += "</html>";
  *              enviar uma pagina para o navegador.
  *=============================================================================
 */
-void handleRoot() {
-
+void handleRoot() 
+{
   digitalWrite(led, 0);
-  server.send(200, "text/html", monta_pagina());
+  server.send(200, "text/html", INDEX_page);
   digitalWrite(led, 1);
 }
+
+
 /*
  *=============================================================================
  *NAME:         void handleLoad()
@@ -362,13 +83,14 @@ void handleRoot() {
  *
  *=============================================================================
 */
-void handleLoad() {
-
+void handleLoad() 
+{
   String data;
+  
   data =  atype;
   data += " ";
   data += ahour;
-  data += " ";
+  data += " "; 
   data += ssidSTAT;
   data += " ";
   data += passwordSTAT;
@@ -379,66 +101,72 @@ void handleLoad() {
   data += " ";
   data += gateway.toString();
 
-  Serial.println(data);
-  server.send(200, "text/text", data);
+  Serial.println(data);     
+  server.send(200, "text/text", data);  
 }
+
+
 /*
  *=============================================================================
- *NAME:         void handleLoad()
+ *NAME:         void handleConf()
  *
- *DESCRIPTION:
+ *DESCRIPTION:  
  *
  *=============================================================================
 */
-void handleConf(){
+void handleConf()
+{
   String sArg, sSub;
   char cIp[20];
   int firstPoint;
-
+  
   Serial.println("Handle Config");
-  if (server.hasArg("desp")){
+  
+  if (server.hasArg("desp"))
+  {
       sArg = server.arg("desp");
-      sArg.toCharArray(atype, TY_LEN);
-      Serial.println(sArg);
+      sArg.toCharArray(atype, TY_LEN); 
+      Serial.println(sArg);      
       sArg = server.arg("time");
       sArg.toCharArray(ahour, HR_LEN);
       Serial.println(sArg);
       sArg = server.arg("rede");
       Serial.println(sArg);
-      sArg.toCharArray(ssidSTAT, ID_LEN);
+      sArg.toCharArray(ssidSTAT, ID_LEN);   
       sArg = server.arg("pass");
       Serial.println(sArg);
       sArg.toCharArray(passwordSTAT, ID_LEN);
-      ip.fromString(server.arg("ip"));
+      ip.fromString(server.arg("ip"));           
       Serial.println(ip);
       subnet.fromString(server.arg("subn"));
       Serial.println(subnet);
       gateway.fromString(server.arg("gatw"));
-      Serial.println(gateway);
+      Serial.println(gateway);                         
       saveBoardConfig();
-      server.send(200, "text/html", monta_resposta_config());
+	  server.send(200, "text/html", CONF_page);
    }
    else
    {
-      server.send(200, "text/html", monta_index());
+	  server.send(200, "text/html", CTRL_page);
    }
 }
+
+
 /*
  *=============================================================================
  *NAME:         void handleSensor()
  *
- *DESCRIPTION:
+ *DESCRIPTION:  
  *=============================================================================
 */
-void handleSensor()
+void handleSensor() 
 {
-  //float valor;
-  //String convertido;
   digitalWrite(led, 1);
-  //convertido = "100";
-  server.send ( 200, "text/text", timeClient.getFormattedTime());
+  server.send ( 200, "text/text", timeClient.getFormattedTime()); 
   digitalWrite(led, 1);
 }
+
+
 /*
  *=============================================================================
  *NAME:         void handleCmd1()
@@ -446,22 +174,25 @@ void handleSensor()
  *DESCRIPTION:
  *=============================================================================
 */
-void handleCmd1(){
-  static int controle = 0;
+void handleCmd1()
+{ 
+  static int controle = 0;  
   digitalWrite(lamp, 0);
-
-  Serial.println("Comando 1");
+  
+  Serial.println("Comando 1"); 
   if (controle == 0){
     controle = 1;
     digitalWrite(lamp, 1);
     analogWrite(lamp,1023);
-    server.send ( 200, "text/text", "Desliga");
+    server.send ( 200, "text/text", "Desliga"); 
   }else{
     controle = 0;
     analogWrite(lamp,0);
-    server.send ( 200, "text/text", "Liga");
+    server.send ( 200, "text/text", "Liga");     
   }
 }
+
+
 /*
  *=============================================================================
  *NAME:         
@@ -471,6 +202,7 @@ void handleCmd1(){
 */
 void handleBuzzer() {
   Serial.println("Buzzer");
+  
   digitalWrite(buzzer,HIGH);
   delay(200);
   digitalWrite(buzzer,LOW);
@@ -479,6 +211,8 @@ void handleBuzzer() {
   delay(300);
   digitalWrite(buzzer,LOW);
 }
+
+
 /*
  *=============================================================================
  *NAME:         
@@ -490,6 +224,8 @@ void handleCmd25() {
   Serial.println("Comando 25%");
     analogWrite(lamp,100);
 }
+
+
 /*
  *=============================================================================
  *NAME:         
@@ -501,6 +237,8 @@ void handleCmd50() {
   Serial.println("Comando 50%");
     analogWrite(lamp,200);
 }
+
+
 /*
  *=============================================================================
  *NAME:         
@@ -512,6 +250,8 @@ void handleCmd80() {
   Serial.println("Comando 80%");
   analogWrite(lamp,600);
 }
+
+
 /*
  *=============================================================================
  *NAME:         handleNotFound(){
@@ -537,6 +277,7 @@ void handleNotFound(){
   digitalWrite(led, 0);
 }
 
+
 /*
  *=============================================================================
  *NAME:         
@@ -549,9 +290,10 @@ void setup_AP(){
   WiFi.disconnect(true);
   delay(200);
   WiFi.mode(WIFI_AP);
-  
+
   Serial.println();
   Serial.println("Configuring access point...");
+
   /* You can remove the password parameter if you want the AP to be open. */
   WiFi.softAP(ssidAP, passwordAP);
   IPAddress myIP = WiFi.softAPIP();
@@ -559,6 +301,8 @@ void setup_AP(){
   Serial.println(myIP);
   Serial.println("");
 }
+
+
 /*
  *=============================================================================
  *NAME:         
@@ -566,10 +310,11 @@ void setup_AP(){
  *DESCRIPTION:  
  *=============================================================================
 */
-int setup_STATION(){
-  
+int setup_STATION()
+{
   Serial.println();
   Serial.println("Configuring station...");
+
   /* You can remove the password parameter if you want the AP to be open. */
   WiFi.begin(ssidSTAT, passwordSTAT);
   delay(100);
@@ -603,6 +348,8 @@ int setup_STATION(){
   Serial.println("");
   return 0;
 }
+
+
 /*
  *=============================================================================
  *NAME:         
@@ -661,11 +408,13 @@ void readBoardConfig(void)
     //Serial.println("Load Default");
   }
 }
+
+
 /*
  *=============================================================================
- *NAME:
+ *NAME:         
  *
- *DESCRIPTION:
+ *DESCRIPTION:  
  *=============================================================================
 */
 void saveBoardConfig(void)
@@ -680,15 +429,15 @@ void saveBoardConfig(void)
   // Save Wifi ahour in EEPROM
   for ( index = 0 ; index < HR_LEN; index++)
     EEPROM.write(EE_HOUR + index, ahour[index]);
-
+  
   // Save Wifi SSID in EEPROM
   for ( index = 0 ; index < ID_LEN; index++)
     EEPROM.write(EE_WIFI_SSID + index, ssidSTAT[index]);
-
+  
   // Save Wifi PASS in EEPROM
   for ( index = 0 ; index < ID_LEN; index++)
     EEPROM.write(EE_WIFI_PASS + index, passwordSTAT[index]);
-
+  
   // Save MAC Address in EEPROM
   for ( index = 0 ; index < 6; index++)
     EEPROM.write(EE_MAC_ADDR + index, mac[index]);
@@ -709,7 +458,9 @@ void saveBoardConfig(void)
   EEPROM.write(EE_ID_ADDR, ID); 
   EEPROM.commit();
   delay(300);
-} 
+}
+
+
 /*
  *=============================================================================
  *NAME:         void setup(void){
@@ -764,6 +515,8 @@ void setup(void)
   timeClient.update();
   bAlarme = false;
 }
+
+
 /*
  *=============================================================================
  *NAME:         
@@ -846,6 +599,8 @@ void checkALARM(void) {
     }
   }
 }
+
+
 /*
  *=============================================================================
  *NAME:         void loop(void)
@@ -862,12 +617,15 @@ void loop(void)
   server.handleClient();
   checkALARM();
   
-  //Depuracao
-  if(Serial.available()){
+  // Depuracao
+  if (Serial.available())
+  {
     byte valor = Serial.read();
-    switch (valor){
+    switch (valor)
+	{
       case '1':           
       break;
+
       case '2':          
       break;     
     }
